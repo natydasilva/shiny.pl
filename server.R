@@ -5,7 +5,9 @@ library(MASS)
 library(ggplot2)
 library(rrcov)
 library(gridExtra)
-
+#library(devtools)
+#install_github("dicook/PPforest")
+library("PPforest")
 
 simu <- function(mux1,mux2,muy1,muy2,cor){
   bivn <- mvrnorm(50, mu = c(mux1,mux2), Sigma = matrix(c(1, cor, cor, 1), 2))
@@ -85,4 +87,23 @@ p4<-ggplot(proj.data.nobest(),aes(x=proj))+geom_histogram(aes(fill=Sim))+theme(l
 print( grid.arrange(p3,p4,ncol=2) )
 
  })
+
+output$plot5<-renderPlot({
+   pprf.crab <- PPforest::PPforest(data = crab, size.tr = 2/3, m = 50, size.p = .7,  
+                                   PPmethod = 'LDA', strata = TRUE)
+   
+   tri <- ggplot(data.frame(x=c(0,1/2,1), y=c(0, sqrt(3)/2, 0))) + geom_polygon(aes(x=x, y=y), colour="black", fill=NA)
+   f1 <- function(x) c((1/2)*(2*x[2] + x[3])/(sum(x)), (sqrt(3)/2)*x[3]/sum(x) )
+  aux   <-pprf.crab$votes[,1:3]+pprf.crab$votes[,4]/3
+#   aux <- reactive({pprf.crab$votes[,input$class]+pprf.crab$votes[,-input$var]/3})
+#   
+#   pr <- reactive({data.frame(t(apply(aux(), 1, f1)), class = pprf.crab$train[, 1])})
+    pr <- data.frame(t(apply(aux, 1, f1)), class = pprf.crab$train[, 1])
+    colnames(pr)[1:2] <- c("X1","X2")
+    print(tri + geom_point(data=pr,aes(X1, X2, color=class)))
+#   
+#   
+#   
+ })
 })
+
